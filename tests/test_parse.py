@@ -120,6 +120,17 @@ class LineTests(unittest.TestCase):
                                                "port 40001 [preauth]"))
         self.assertEqual(event.action, parse.CLOSED)
 
+    def test_a_reset_connection(self):
+        event = self.parse_one(build.sshd(
+            WHEN, "Connection reset by 203.0.113.5 port 51234 [preauth]"))
+        self.assertEqual(event.action, parse.CLOSED)
+        self.assertEqual(event.address, "203.0.113.5")
+
+    def test_a_connection_that_timed_out(self):
+        event = self.parse_one(build.sshd(
+            WHEN, "Timeout before authentication for 203.0.113.5 port 51234"))
+        self.assertEqual(event.action, parse.CLOSED)
+
     def test_giving_up_after_too_many_attempts(self):
         event = self.parse_one(build.sshd(
             WHEN, "error: maximum authentication attempts exceeded for root from "

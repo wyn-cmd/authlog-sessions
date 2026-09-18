@@ -76,6 +76,9 @@ SSHD_PATTERNS = (
     (re.compile(r"Disconnected from (?:invalid |authenticating )?user (?P<user>\S+) (?P<address>\S+) port (?P<port>\d+)"), DISCONNECTED),
     (re.compile(r"Connection closed by (?:authenticating |invalid )?user (?P<user>\S+) (?P<address>\S+) port (?P<port>\d+)"), CLOSED),
     (re.compile(r"Connection closed by (?P<address>\S+) port (?P<port>\d+)"), CLOSED),
+    (re.compile(r"Connection reset by (?P<address>\S+) port (?P<port>\d+)"), CLOSED),
+    (re.compile(r"Timeout before authentication for (?P<address>\S+) "
+                r"port (?P<port>\d+)"), CLOSED),
     (re.compile(r"session opened for user (?P<user>[\w.$@-]+)"), SESSION_OPENED),
     (re.compile(r"session closed for user (?P<user>[\w.$@-]+)"), SESSION_CLOSED),
     (re.compile(r"pam_unix\(sshd:auth\): authentication failure"), PAM_FAILURE),
