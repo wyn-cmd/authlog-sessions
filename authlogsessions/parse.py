@@ -70,6 +70,10 @@ SSHD_PATTERNS = (
     (re.compile(r"Failed password for (?:illegal user )?(?P<user>\S+) from (?P<address>\S+) port (?P<port>\d+)"), FAILED_PASSWORD),
     (re.compile(r"Invalid user (?P<user>\S+) from (?P<address>\S+)"), INVALID_USER),
     (re.compile(r"Accepted password for (?P<user>\S+) from (?P<address>\S+) port (?P<port>\d+)"), ACCEPTED_PASSWORD),
+    # A keyboard interactive login is a password prompt in disguise, and
+    # some servers are configured to offer only that.
+    (re.compile(r"Accepted keyboard-interactive/pam for (?P<user>\S+) from "
+                r"(?P<address>\S+) port (?P<port>\d+)"), ACCEPTED_PASSWORD),
     (re.compile(r"Accepted publickey for (?P<user>\S+) from (?P<address>\S+) port (?P<port>\d+)"), ACCEPTED_KEY),
     (re.compile(r"maximum authentication attempts exceeded for (?:invalid user )?(?P<user>\S+) from (?P<address>\S+) port (?P<port>\d+)"), MAX_ATTEMPTS),
     (re.compile(r"Received disconnect from (?P<address>\S+) port (?P<port>\d+)"), DISCONNECTED),

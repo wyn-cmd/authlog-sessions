@@ -100,6 +100,13 @@ class LineTests(unittest.TestCase):
         event = self.parse_one(build.accepted(WHEN, "deploy", "10.0.0.4", 55000, key=True))
         self.assertEqual(event.action, parse.ACCEPTED_KEY)
 
+    def test_a_keyboard_interactive_login(self):
+        event = self.parse_one(build.sshd(
+            WHEN, "Accepted keyboard-interactive/pam for root from "
+                  "203.0.113.5 port 51234 ssh2"))
+        self.assertEqual(event.action, parse.ACCEPTED_PASSWORD)
+        self.assertEqual(event.user, "root")
+
     def test_a_session_opening_and_closing(self):
         opened = self.parse_one(build.sshd(WHEN, "pam_unix(sshd:session): "
                                                 "session opened for user root by (uid=0)"))
