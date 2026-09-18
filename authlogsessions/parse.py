@@ -80,6 +80,12 @@ SSHD_PATTERNS = (
     (re.compile(r"session closed for user (?P<user>[\w.$@-]+)"), SESSION_CLOSED),
     (re.compile(r"pam_unix\(sshd:auth\): authentication failure"), PAM_FAILURE),
     (re.compile(r"PAM \d+ more authentication failure"), PAM_FAILURE),
+    # OpenSSH 8 moved the session lines out of pam and into sshd itself,
+    # so a newer machine writes these and no pam line at all.
+    (re.compile(r"Starting session \d+ of user (?P<user>\S+) from "
+                r"(?P<address>\S+) port (?P<port>\d+)"), SESSION_OPENED),
+    (re.compile(r"Close session: user (?P<user>\S+) from "
+                r"(?P<address>\S+) port (?P<port>\d+)"), SESSION_CLOSED),
 )
 
 SUDO_PATTERN = re.compile(

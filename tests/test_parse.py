@@ -149,6 +149,18 @@ class LineTests(unittest.TestCase):
         event = self.parse_one(build.sshd(WHEN, "subsystem request for sftp by user root"))
         self.assertEqual(event.action, parse.UNKNOWN)
 
+    def test_a_session_line_from_openssh_eight(self):
+        event = self.parse_one(build.sshd(
+            WHEN, "Starting session 42 of user root from 203.0.113.5 port 51234"))
+        self.assertEqual(event.action, parse.SESSION_OPENED)
+        self.assertEqual(event.user, "root")
+        self.assertEqual(event.address, "203.0.113.5")
+
+    def test_a_close_session_line_from_openssh_eight(self):
+        event = self.parse_one(build.sshd(
+            WHEN, "Close session: user root from 203.0.113.5 port 51234"))
+        self.assertEqual(event.action, parse.SESSION_CLOSED)
+
     def test_a_line_with_no_process_tag_is_not_a_log_line(self):
         self.assertIsNone(self.parse_one("just some text with no tag"))
 
