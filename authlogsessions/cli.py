@@ -43,13 +43,14 @@ def main(argv=None):
     lines = 0
     files = []
     host = None
+    tracker = parse.YearTracker(args.year)
 
     try:
         for path, _, line in parse.read_lines(args.logs, year=args.year):
             lines += 1
             if path not in files:
                 files.append(path)
-            event = parse.parse_line(line, year=args.year)
+            event = parse.parse_line(line, year=tracker.for_line(line))
             if event is None:
                 continue
             if not host and event.host:

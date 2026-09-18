@@ -166,6 +166,32 @@ def find_user(text):
     return None
 
 
+class YearTracker:
+    """The year for syslog lines, which carry a month and nothing more.
+
+    For a log that spans New Year the month going backwards between two
+    lines is the giveaway, and the year follows it. Without this every
+    line after the turn reads as the previous year, which puts the end of
+    an incident before its beginning in the report.
+    """
+
+    def __init__(self, year=None):
+        self.year = year or datetime.date.today().year
+        self.previous_month = None
+
+    def for_line(self, line):
+        match = SYSLOG_STAMP.match(line)
+        if not match:
+            return self.year
+        month = MONTHS.get(match.group("stamp").split()[0])
+        if not month:
+            return self.year
+        if self.previous_month and month < self.previous_month:
+            self.year += 1
+        self.previous_month = month
+        return self.year
+
+
 def parse_line(line, year=None, fallback_year=None):
     """One log line into an Event, or None when there is nothing to read."""
     line = line.rstrip("\n")

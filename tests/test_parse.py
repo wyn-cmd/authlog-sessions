@@ -68,6 +68,23 @@ class FieldTests(unittest.TestCase):
         self.assertEqual(parse.find_user("rhost=10.0.0.1  user=deploy"), "deploy")
 
 
+class YearTrackerTests(unittest.TestCase):
+    def test_the_month_going_backwards_rolls_the_year(self):
+        tracker = parse.YearTracker(2025)
+        self.assertEqual(tracker.for_line("Dec 31 23:59:00 host sshd[1]: x"), 2025)
+        self.assertEqual(tracker.for_line("Jan  1 00:00:01 host sshd[1]: x"), 2026)
+        self.assertEqual(tracker.for_line("Feb  2 00:00:01 host sshd[1]: x"), 2026)
+
+    def test_the_year_does_not_creep_forward_within_a_year(self):
+        tracker = parse.YearTracker(2026)
+        for month in ("Mar", "Jul", "Nov", "Dec"):
+            self.assertEqual(tracker.for_line(f"{month}  1 00:00:01 h s[1]: x"), 2026)
+
+    def test_an_iso_line_leaves_it_alone(self):
+        tracker = parse.YearTracker(2026)
+        self.assertEqual(tracker.for_line("2024-01-01T00:00:00Z h s[1]: x"), 2026)
+
+
 class LineTests(unittest.TestCase):
     def parse_one(self, line, **kwargs):
         return parse.parse_line(line, **kwargs)
