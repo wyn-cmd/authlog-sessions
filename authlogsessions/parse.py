@@ -101,6 +101,10 @@ SSHD_PATTERNS = (
                 r"(?P<address>\S+) port (?P<port>\d+)"), SESSION_CLOSED),
 )
 
+SU_PATTERN = re.compile(
+    r"pam_unix\(su(?:-l)?:session\): session (?:opened|closed) for user "
+    r"(?P<target>\S+?)(?:\s+by\s+(?P<actor>[^(]+)\(uid=\d+\))?\s*$")
+
 SUDO_PATTERN = re.compile(
     r"^\s*(?P<user>[\w.$@-]+)\s*:\s*(?:TTY=(?P<tty>\S+)\s*;\s*)?.*?COMMAND=(?P<command>.+)$")
 
@@ -214,6 +218,15 @@ def parse_line(line, year=None, fallback_year=None):
 
     # sudo writes the account first, then the command. It is worth its own pass
     # because the interesting part is the command line, not the login.
+    if source == "su":
+        # su names the account that ran it and the account it became, so
+        # the actor is the interesting half: which user went to root.
+        match = SU_PATTERN.search(message)
+        if match:
+            return Event(stamp, host, source, SUDO_COMMAND,
+                         match.group("actor") or match.group("target"),
+                         None, None, f"su to {match.group('target')}")
+
     if source in ("sudo", "su"):
         match = SUDO_PATTERN.match(message)
         if match:

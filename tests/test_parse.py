@@ -174,6 +174,13 @@ class LineTests(unittest.TestCase):
         self.assertEqual(event.user, "root")
         self.assertEqual(event.detail, "/bin/cat /etc/shadow")
 
+    def test_a_su_session_names_the_actor(self):
+        line = build.sshd(WHEN, "pam_unix(su:session): session opened for "
+                                        "user root by deploy(uid=1000)")
+        event = self.parse_one(line.replace("sshd[1234]", "su[900]"))
+        self.assertEqual(event.action, parse.SUDO_COMMAND)
+        self.assertEqual(event.detail, "su to root")
+
     def test_a_new_account(self):
         event = self.parse_one(build.user_added(WHEN, "backdoor"))
         self.assertEqual(event.action, parse.ACCOUNT_CHANGE)
