@@ -150,6 +150,12 @@ class FindingTests(unittest.TestCase):
         sources, _ = reconstruct_from(lines)
         return " | ".join(sessions.findings(sources))
 
+    def test_a_refusal_counts_as_a_failure(self):
+        lines = [build.sshd(WHEN, "User backup not allowed because "
+                                         "account is locked")]
+        events = events_from(lines)
+        self.assertEqual(events[0].action, parse.REFUSED)
+
     def test_a_login_after_many_failures_is_named(self):
         self.assertIn("failed 25 time(s) and then got in",
                       self.findings_for(build.brute_force_log()))

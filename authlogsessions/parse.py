@@ -31,6 +31,7 @@ SESSION_CLOSED = "session closed"
 DISCONNECTED = "disconnected"
 CLOSED = "connection closed"
 SUDO_COMMAND = "sudo command"
+REFUSED = "refused by configuration"
 ACCOUNT_CHANGE = "account change"
 UNKNOWN = "unrecognised"
 
@@ -69,6 +70,11 @@ SSHD_PATTERNS = (
     (re.compile(r"Failed password for invalid user (?P<user>\S+) from (?P<address>\S+) port (?P<port>\d+)"), FAILED_PASSWORD),
     (re.compile(r"Failed password for (?:illegal user )?(?P<user>\S+) from (?P<address>\S+) port (?P<port>\d+)"), FAILED_PASSWORD),
     (re.compile(r"Invalid user (?P<user>\S+) from (?P<address>\S+)"), INVALID_USER),
+    # A refusal is not a wrong password. The account exists and the
+    # server is configured to reject it, which reads differently.
+    (re.compile(r"User (?P<user>\S+) not allowed because"), REFUSED),
+    (re.compile(r"Failed none for invalid user (?P<user>\S+) from "
+                r"(?P<address>\S+) port (?P<port>\d+)"), FAILED_PASSWORD),
     (re.compile(r"Accepted password for (?P<user>\S+) from (?P<address>\S+) port (?P<port>\d+)"), ACCEPTED_PASSWORD),
     # A keyboard interactive login is a password prompt in disguise, and
     # some servers are configured to offer only that.

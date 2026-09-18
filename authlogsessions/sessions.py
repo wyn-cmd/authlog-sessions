@@ -14,7 +14,7 @@ from collections import Counter
 from . import parse
 
 FAILURE_ACTIONS = (parse.FAILED_PASSWORD, parse.INVALID_USER, parse.PAM_FAILURE,
-                   parse.MAX_ATTEMPTS)
+                   parse.MAX_ATTEMPTS, parse.REFUSED)
 SUCCESS_ACTIONS = (parse.ACCEPTED_PASSWORD, parse.ACCEPTED_KEY)
 
 
