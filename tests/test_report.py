@@ -69,6 +69,20 @@ class RenderTests(unittest.TestCase):
         self.assertIn("got in as root", self.text)
         self.assertIn("usernames:", self.text)
 
+    def test_the_busiest_hours_are_shown(self):
+        self.assertIn("busiest hours", self.text)
+        self.assertIn("03:00", self.text)
+
+    def test_busiest_hours_counts_per_hour(self):
+        sources, _ = None, None
+        from authlogsessions import sessions as session_module
+        lines = build.brute_force_log()
+        events = [event for event in (parse.parse_line(line) for line in lines)
+                  if event is not None]
+        rebuilt, _ = session_module.reconstruct(events)
+        hours = report.busiest_hours(rebuilt[0])
+        self.assertEqual(hours[0][0], 3)
+
     def test_the_commands_after_the_login_are_shown(self):
         self.assertIn("/etc/shadow", self.text)
 

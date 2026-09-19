@@ -62,6 +62,21 @@ def _source_line(source):
             f"{len(source.connections):>3} connection(s)  {sessions.outcome(source)}")
 
 
+def busiest_hours(source, top=3):
+    """The hours of the day this address was most active in.
+
+    A machine that works through the small hours is usually another
+    machine, and a person logging in at four in the morning is worth
+    asking about, so the shape of the day is worth printing.
+    """
+    counted = Counter()
+    for connection in source.connections:
+        for event in connection.events:
+            if event.timestamp:
+                counted[event.timestamp.hour] += 1
+    return counted.most_common(top)
+
+
 def _narrative(source, width=100):
     out = []
     out.append(f"{source.address}")
@@ -74,6 +89,11 @@ def _narrative(source, width=100):
         top = ", ".join(f"{name} x{count}" for name, count in source.usernames.most_common(5))
         extra = len(source.usernames) - 5
         out.append(f"  usernames: {top}" + (f", and {extra} more" if extra > 0 else ""))
+
+    hours = busiest_hours(source)
+    if hours:
+        out.append("  busiest hours: " + ", ".join(
+            f"{hour:02d}:00 x{count}" for hour, count in hours))
 
     for connection in source.connections:
         for event in connection.events:
