@@ -88,6 +88,17 @@ class RenderTests(unittest.TestCase):
         self.assertIn("1 connection(s)", " ".join(
             line for line in self.text.split("\n") if "203.0.113.5" in line and "connection" in line))
 
+    def test_the_username_spread_counts_addresses_not_attempts(self):
+        lines = build.brute_force_log() + build.scanner_log()
+        spread = report.username_spread(report_from(lines), top=3)
+        by_name = {name: (count, sources_seen) for name, count, sources_seen in spread}
+        self.assertEqual(by_name["root"][1], 2)
+
+    def test_users_puts_the_section_in_the_report(self):
+        text = report.render(self.report, users=3)
+        self.assertIn("usernames being tried", text)
+        self.assertIn("tried by", text)
+
     def test_top_limits_the_table_and_says_what_is_left(self):
         text = report.render(self.report, top=1)
         self.assertIn("and 2 more", text)

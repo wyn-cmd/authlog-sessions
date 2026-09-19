@@ -9,6 +9,8 @@ alarming. A report that opens with 4,000 raw lines is a report nobody reads.
 from . import parse
 from . import sessions
 
+from collections import Counter, defaultdict
+
 
 def human_duration(seconds):
     if seconds is None:
@@ -90,7 +92,8 @@ def _narrative(source, width=100):
     return "\n".join(line[:width] for line in out)
 
 
-def render(report, top=10, focus=None, width=100, minimum=1, quiet=False):
+def render(report, top=10, focus=None, width=100, minimum=1, quiet=False,
+           users=0):
     out = []
 
     out.append(f"{len(report.files)} file(s), {report.line_count:,} line(s), "
@@ -119,6 +122,14 @@ def render(report, top=10, focus=None, width=100, minimum=1, quiet=False):
                    f"between them")
     out.append("")
 
+    if users:
+        out.append("usernames being tried")
+        for username, count, sources_seen in username_spread(report, users):
+            plural = "address" if sources_seen == 1 else "addresses"
+            out.append(f"  {count:>7,}  {username:<24} "
+                       f"tried by {sources_seen} {plural}")
+        out.append("")
+
     if not quiet:
         for source in shown[:top if not focus else len(shown)]:
             out.append(_narrative(source, width=width))
@@ -145,6 +156,23 @@ def render(report, top=10, focus=None, width=100, minimum=1, quiet=False):
         out.append("")
 
     return "\n".join(out)
+
+
+def username_spread(report, top=10):
+    """Usernames across every source, with how many addresses tried each.
+
+    One address trying root is a bot. Twenty addresses trying the same
+    three names at once is a campaign against those names, and the report
+    reads differently when you can see that.
+    """
+    attempts = Counter()
+    address_sets = defaultdict(set)
+    for source in report.sources:
+        for username, count in source.usernames.items():
+            attempts[username] += count
+            address_sets[username].add(source.address)
+    return [(username, count, len(address_sets[username]))
+            for username, count in attempts.most_common(top)]
 
 
 def as_dict(report, top=10):
