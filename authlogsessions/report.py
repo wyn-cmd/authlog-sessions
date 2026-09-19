@@ -195,6 +195,29 @@ def username_spread(report, top=10):
             for username, count in attempts.most_common(top)]
 
 
+def as_csv(report, top=10):
+    """The sources table as CSV, for a spreadsheet or another script."""
+    rows = ["address,first,last,connections,events,failures,successes,succeeded_as,usernames"]
+    for source in report.sources[:top]:
+        succeeded = " ".join(sessions.succeeded_as(source))
+        names = " ".join(name for name, _ in source.usernames.most_common(5))
+        fields = (source.address,
+                  source.first.isoformat() if source.first else "",
+                  source.last.isoformat() if source.last else "",
+                  str(len(source.connections)), str(source.attempts),
+                  str(source.failures), str(source.successes),
+                  succeeded, names)
+        rows.append(",".join(_csv_field(field) for field in fields))
+    return "\n".join(rows) + "\n"
+
+
+def _csv_field(value):
+    """Quote a field if it holds anything that would break the row."""
+    if any(character in value for character in ',"\n'):
+        return '"' + value.replace('"', '""') + '"'
+    return value
+
+
 def as_dict(report, top=10):
     """The same reconstruction as data, for anything that wants to plot it."""
     return {

@@ -63,6 +63,8 @@ def build_parser():
                         help="print only this source address")
     parser.add_argument("--year", type=int,
                         help="year for logs that do not carry one, as syslog does not")
+    parser.add_argument("--csv", action="store_true",
+                        help="print the sources table as CSV")
     parser.add_argument("--json", action="store_true",
                         help="print the reconstruction as JSON")
     parser.add_argument("--version", action="version",
@@ -124,6 +126,10 @@ def main(argv=None):
             return 1
 
     result = report.Report(events, files, lines, host=host)
+
+    if args.csv:
+        print(report.as_csv(result, top=args.top), end="")
+        return 0
 
     if args.json:
         print(json.dumps(report.as_dict(result, top=args.top), indent=2))

@@ -75,6 +75,14 @@ class CommandTests(unittest.TestCase):
         self.assertEqual(len(data["sources"]), 3)
         self.assertTrue(data["findings"])
 
+    def test_csv_comes_out_with_a_header_and_a_row_per_source(self):
+        code, out, _ = run([self.mixed, "--csv"])
+        self.assertEqual(code, 0)
+        rows = out.strip().split("\n")
+        self.assertEqual(len(rows), 4)
+        self.assertTrue(rows[0].startswith("address,first,last"))
+        self.assertIn("203.0.113.5", rows[1])
+
     def test_top_limits_the_report(self):
         code, out, _ = run([self.mixed, "--top", "1"])
         self.assertEqual(code, 0)
