@@ -21,6 +21,10 @@ def build_parser():
                         help="auth.log, secure, or a journal export, gzipped or not")
     parser.add_argument("-n", "--top", type=int, default=10,
                         help="sources to print in full (default: 10)")
+    parser.add_argument("--min-attempts", type=int, default=1, metavar="N",
+                        help="hide sources with fewer than this many events")
+    parser.add_argument("--quiet", action="store_true",
+                        help="print the table and the findings, without the narratives")
     parser.add_argument("--source", metavar="ADDRESS",
                         help="print only this source address")
     parser.add_argument("--year", type=int,
@@ -76,7 +80,8 @@ def main(argv=None):
     if args.json:
         print(json.dumps(report.as_dict(result, top=args.top), indent=2))
     else:
-        print(report.render(result, top=args.top, focus=args.source), end="")
+        print(report.render(result, top=args.top, focus=args.source,
+                            minimum=args.min_attempts, quiet=args.quiet), end="")
     return 0
 
 

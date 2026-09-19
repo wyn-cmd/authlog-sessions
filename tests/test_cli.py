@@ -85,6 +85,18 @@ class CommandTests(unittest.TestCase):
         self.assertEqual(code, 0)
         self.assertIn("2024-09-15", out)
 
+    def test_min_attempts_hides_the_quiet_scanners(self):
+        code, out, _ = run([self.mixed, "--min-attempts", "20"])
+        self.assertEqual(code, 0)
+        self.assertIn("203.0.113.5", out)
+        self.assertNotIn("10.0.0.4", out)
+
+    def test_quiet_leaves_out_the_narratives(self):
+        code, out, _ = run([self.attack, "--quiet"])
+        self.assertEqual(code, 0)
+        self.assertIn("sources, busiest first", out)
+        self.assertNotIn("usernames:", out)
+
     def test_a_missing_file_is_reported(self):
         code, _, err = run([os.path.join(self.work, "absent.log")])
         self.assertEqual(code, 2)

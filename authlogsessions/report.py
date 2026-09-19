@@ -90,7 +90,7 @@ def _narrative(source, width=100):
     return "\n".join(line[:width] for line in out)
 
 
-def render(report, top=10, focus=None, width=100):
+def render(report, top=10, focus=None, width=100, minimum=1, quiet=False):
     out = []
 
     out.append(f"{len(report.files)} file(s), {report.line_count:,} line(s), "
@@ -103,6 +103,8 @@ def render(report, top=10, focus=None, width=100):
     out.append("")
 
     shown = report.sources if not focus else [s for s in report.sources if s.address == focus]
+    if minimum > 1:
+        shown = [source for source in shown if source.attempts >= minimum]
     if not shown:
         out.append(f"nothing from {focus}" if focus else "nothing was recognised in these logs")
         out.append("")
@@ -117,9 +119,10 @@ def render(report, top=10, focus=None, width=100):
                    f"between them")
     out.append("")
 
-    for source in shown[:top if not focus else len(shown)]:
-        out.append(_narrative(source, width=width))
-        out.append("")
+    if not quiet:
+        for source in shown[:top if not focus else len(shown)]:
+            out.append(_narrative(source, width=width))
+            out.append("")
 
     lines = sessions.findings(report.sources if not focus else shown)
     out.append("what stands out")
