@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "authlog-sessions"
+version = "0.1.0"
+description = "Rebuild attacker sessions from Linux authentication logs."
+readme = "README.md"
+requires-python = ">=3.8"
+license = {file = "LICENSE"}
+keywords = ["dfir", "auth.log", "sshd", "forensics", "incident-response"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Topic :: Security",
+    "Topic :: System :: Systems Administration",
+]
+
+[project.scripts]
+authlog-sessions = "authlogsessions.cli:main"
+
+[tool.setuptools]
+packages = ["authlogsessions"]

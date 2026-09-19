@@ -10,6 +10,15 @@ Python 3.8 or newer. Nothing else, no dependencies to install.
 
 ## Running it
 
+It installs as a command if you would rather not type the module name:
+
+```
+pip install .
+authlog-sessions /var/log/auth.log
+```
+
+Or run it in place:
+
 ```
 python3 -m authlogsessions /var/log/auth.log
 python3 -m authlogsessions auth.log auth.log.1 auth.log.2.gz
