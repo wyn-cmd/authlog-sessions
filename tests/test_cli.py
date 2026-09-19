@@ -80,6 +80,21 @@ class CommandTests(unittest.TestCase):
         self.assertEqual(code, 0)
         self.assertIn("and 2 more", out)
 
+    def test_a_time_window_narrows_the_report(self):
+        code, out, _ = run([self.mixed, "--since", "2026-09-15T03:24:00"])
+        self.assertEqual(code, 0)
+        self.assertIn("203.0.113.5", out)
+
+    def test_a_window_with_nothing_in_it_is_reported(self):
+        code, _, err = run([self.attack, "--since", "2030-01-01"])
+        self.assertEqual(code, 1)
+        self.assertIn("inside that window", err)
+
+    def test_a_time_that_makes_no_sense_is_refused(self):
+        code, _, err = run([self.attack, "--since", "whenever"])
+        self.assertEqual(code, 2)
+        self.assertIn("as a time", err)
+
     def test_a_year_can_be_given_for_syslog(self):
         code, out, _ = run([self.attack, "--year", "2024"])
         self.assertEqual(code, 0)

@@ -5,12 +5,40 @@ modules this calls.
 """
 
 import argparse
+import datetime
 import json
 import sys
 
 from . import __version__
 from . import parse
 from . import report
+
+
+def parse_time(text):
+    """A timestamp from the command line: seconds, or an ISO 8601 time."""
+    try:
+        return float(text)
+    except ValueError:
+        pass
+    try:
+        return datetime.datetime.fromisoformat(text)
+    except ValueError:
+        raise ValueError(f"could not read '{text}' as a time")
+
+
+def in_window(event, since, until):
+    """True when an event falls inside the window.
+
+    A line with no timestamp cannot be placed in a window, so asking for
+    one drops those lines rather than silently keeping them.
+    """
+    if event.timestamp is None:
+        return False
+    if since is not None and event.timestamp < since:
+        return False
+    if until is not None and event.timestamp > until:
+        return False
+    return True
 
 
 def build_parser():
@@ -21,6 +49,10 @@ def build_parser():
                         help="auth.log, secure, or a journal export, gzipped or not")
     parser.add_argument("-n", "--top", type=int, default=10,
                         help="sources to print in full (default: 10)")
+    parser.add_argument("--since", metavar="TIME",
+                        help="only count events at or after this time")
+    parser.add_argument("--until", metavar="TIME",
+                        help="only count events at or before this time")
     parser.add_argument("--min-attempts", type=int, default=1, metavar="N",
                         help="hide sources with fewer than this many events")
     parser.add_argument("--quiet", action="store_true",
@@ -74,6 +106,20 @@ def main(argv=None):
         print("authlog-sessions: nothing in those files looked like a log line",
               file=sys.stderr)
         return 1
+
+    try:
+        since = parse_time(args.since) if args.since else None
+        until = parse_time(args.until) if args.until else None
+    except ValueError as error:
+        print(f"authlog-sessions: {error}", file=sys.stderr)
+        return 2
+
+    if since is not None or until is not None:
+        events = [event for event in events if in_window(event, since, until)]
+        if not events:
+            print("authlog-sessions: nothing happened inside that window",
+                  file=sys.stderr)
+            return 1
 
     result = report.Report(events, files, lines, host=host)
 
