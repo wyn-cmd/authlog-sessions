@@ -226,6 +226,27 @@ def reconstruct(events):
     return sources, orphans
 
 
+def is_local(address):
+    """True for loopback and the private ranges.
+
+    A login attempt from one of these did not come over the internet.
+    Either something inside the network is doing it or the machine is
+    being pivoted through, and both are worth a different response from
+    a brute force from outside.
+    """
+    if address.startswith("127.") or address in ("::1", "0:0:0:0:0:0:0:1"):
+        return True
+    if address.startswith(("10.", "192.168.")):
+        return True
+    if address.startswith("172."):
+        try:
+            second = int(address.split(".")[1])
+        except (IndexError, ValueError):
+            return False
+        return 16 <= second <= 31
+    return address.lower().startswith(("fe80:", "fc", "fd"))
+
+
 def succeeded_as(source):
     """The accounts this address got in as, in the order it managed it."""
     names = []
@@ -309,6 +330,15 @@ def findings(sources, limit=12):
             plural = "minute" if round(minutes(source)) == 1 else "minutes"
             lines.append(f"{source.address} managed {rate(source):.0f} attempts a "
                          f"minute for {minutes(source):.0f} {plural}")
+
+    for source in sources:
+        # An internal address that only logged in cleanly is not news.
+        # One that failed a lot is, and it reads differently from a
+        # brute force coming in over the internet.
+        if is_local(source.address) and source.failures:
+            lines.append(f"{source.address} is a private address, so this "
+                         "came from the machine itself or from inside the "
+                         "network rather than over the internet")
 
     for source in sources:
         if source.commands:

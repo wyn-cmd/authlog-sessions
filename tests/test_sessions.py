@@ -122,6 +122,22 @@ class AttributionTests(unittest.TestCase):
         self.assertEqual(orphans, [])
 
 
+class LocalAddressTests(unittest.TestCase):
+    def test_private_and_loopback_ranges_are_local(self):
+        for address in ("127.0.0.1", "10.1.2.3", "192.168.0.9",
+                        "172.16.5.4", "172.31.0.1", "::1", "fe80::1"):
+            self.assertTrue(sessions.is_local(address), address)
+
+    def test_public_addresses_are_not(self):
+        for address in ("203.0.113.5", "8.8.8.8", "172.32.0.1",
+                        "2001:db8::1"):
+            self.assertFalse(sessions.is_local(address), address)
+
+    def test_an_internal_source_is_named_in_the_findings(self):
+        sources, _ = reconstruct_from([build.failed(WHEN, "root", "10.0.0.9", 22)])
+        self.assertIn("private address", " | ".join(sessions.findings(sources)))
+
+
 class OutcomeTests(unittest.TestCase):
     def test_an_address_that_never_got_in(self):
         sources, _ = reconstruct_from(build.scanner_log())
