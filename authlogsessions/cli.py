@@ -12,6 +12,7 @@ import sys
 from . import __version__
 from . import parse
 from . import report
+from . import sessions
 
 
 def parse_time(text):
@@ -63,6 +64,8 @@ def build_parser():
                         help="print only this source address")
     parser.add_argument("--year", type=int,
                         help="year for logs that do not carry one, as syslog does not")
+    parser.add_argument("--fail-on-findings", action="store_true",
+                        help="exit 3 when anything stands out, for a pipeline")
     parser.add_argument("--csv", action="store_true",
                         help="print the sources table as CSV")
     parser.add_argument("--json", action="store_true",
@@ -126,10 +129,11 @@ def main(argv=None):
             return 1
 
     result = report.Report(events, files, lines, host=host)
+    findings = sessions.findings(result.sources)
 
     if args.csv:
         print(report.as_csv(result, top=args.top), end="")
-        return 0
+        return 3 if args.fail_on_findings and findings else 0
 
     if args.json:
         print(json.dumps(report.as_dict(result, top=args.top), indent=2))
@@ -137,6 +141,9 @@ def main(argv=None):
         print(report.render(result, top=args.top, focus=args.source,
                             minimum=args.min_attempts, quiet=args.quiet,
                             users=args.users), end="")
+
+    if args.fail_on_findings and findings:
+        return 3
     return 0
 
 

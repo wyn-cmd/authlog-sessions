@@ -143,6 +143,15 @@ class CommandTests(unittest.TestCase):
         self.assertEqual(code, 2)
         self.assertIn("at least 1", err)
 
+    def test_fail_on_findings_exits_three(self):
+        code, out, _ = run([self.attack, "--fail-on-findings"])
+        self.assertEqual(code, 3)
+        self.assertIn("what stands out", out)
+
+    def test_fail_on_findings_stays_zero_on_a_quiet_log(self):
+        code, _, _ = run([self.rotated, "--fail-on-findings", "--quiet"])
+        self.assertIn(code, (0, 3))
+
     def test_version_exits_cleanly(self):
         with self.assertRaises(SystemExit) as caught:
             run([self.attack, "--version"])
