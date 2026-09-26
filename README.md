@@ -25,6 +25,12 @@ python3 -m authlogsessions auth.log auth.log.1 auth.log.2.gz
 python3 -m authlogsessions auth.log --source 203.0.113.5
 ```
 
+A pipe works too, which is what you want on a machine you would rather not write files to:
+
+```
+journalctl -o short-iso | python3 -m authlogsessions -
+```
+
 Rotated and compressed logs are fine. Every file is opened by its magic bytes rather than its extension, so `auth.log.1.gz` is read without being unpacked first.
 
 To try it without a log of your own:
@@ -69,7 +75,7 @@ what stands out
 
 ## Reading it
 
-**The header** counts the files, the lines, how many lines were recognised, and the window the log covers. If unrecognised lines are climbing, the log has a shape this tool has not seen, and the report names the first one so you can look at it.
+**The header** counts the files, the lines, how many lines were recognised, and the window the log covers. It also names the host, or every host when the input mixes logs from more than one machine...[truncated]
 
 **The table** is one row per source address, busiest first, with a one line verdict: got in, got in after failures, or never got in at all.
 

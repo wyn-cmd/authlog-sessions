@@ -240,6 +240,18 @@ class ReadTests(unittest.TestCase):
         self.assertEqual([row[0] for row in rows][0], first)
         self.assertEqual([row[0] for row in rows][-1], second)
 
+    def test_a_pipe_is_read_as_text(self):
+        import io
+        written = "".join(build.quiet_log())
+        saved = sys.stdin
+        try:
+            sys.stdin = io.StringIO(written)
+            rows = list(parse.read_lines(["-"]))
+        finally:
+            sys.stdin = saved
+        self.assertEqual(len(rows), len(build.quiet_log()))
+        self.assertEqual(rows[0][0], "-")
+
     def test_a_missing_file_is_an_error(self):
         with self.assertRaises(FileNotFoundError):
             list(parse.read_lines([os.path.join(self.work, "absent.log")]))

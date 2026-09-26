@@ -267,7 +267,17 @@ def read_lines(paths, year=None):
     import gzip
     import io
 
+    import sys
+
     for path in paths:
+        if path == "-":
+            # A pipe cannot be sniffed for gzip without eating the first
+            # bytes, so stdin is taken as text. journalctl -o short-iso is
+            # the usual thing to put on the other end of it.
+            for number, line in enumerate(sys.stdin, start=1):
+                yield "-", number, line
+            continue
+
         with open(path, "rb") as handle:
             head = handle.read(2)
             handle.seek(0)

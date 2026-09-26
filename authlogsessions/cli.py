@@ -129,14 +129,18 @@ def main(argv=None):
             return 1
 
     result = report.Report(events, files, lines, host=host)
-    findings = sessions.findings(result.sources)
+    scoped_sources = (result.sources if not args.source
+                       else [s for s in result.sources if s.address == args.source])
+    findings = sessions.findings(scoped_sources)
 
     if args.csv:
-        print(report.as_csv(result, top=args.top), end="")
+        print(report.as_csv(result, top=args.top, focus=args.source,
+                            minimum=args.min_attempts), end="")
         return 3 if args.fail_on_findings and findings else 0
 
     if args.json:
-        print(json.dumps(report.as_dict(result, top=args.top), indent=2))
+        print(json.dumps(report.as_dict(result, top=args.top, focus=args.source,
+                                        minimum=args.min_attempts), indent=2))
     else:
         print(report.render(result, top=args.top, focus=args.source,
                             minimum=args.min_attempts, quiet=args.quiet,

@@ -37,6 +37,7 @@ class Report:
         self.line_count = line_count
         self.host = host
         self.sources, self.orphans = sessions.reconstruct(events)
+        self.hosts = sorted({event.host for event in events if event.host})
         self.unrecognised = [event for event in events if event.action == parse.UNKNOWN]
 
         moments = [event.timestamp for event in events if event.timestamp]
@@ -118,7 +119,9 @@ def render(report, top=10, focus=None, width=100, minimum=1, quiet=False,
 
     out.append(f"{len(report.files)} file(s), {report.line_count:,} line(s), "
                f"{len(report.events):,} recognised, {len(report.sources)} source address(es)")
-    if report.host:
+    if len(getattr(report, "hosts", [])) > 1:
+        out.append("hosts " + ", ".join(report.hosts))
+    elif report.host:
         out.append(f"host {report.host}")
     if report.first:
         out.append(f"window {stamp(report.first)} to {stamp(report.last)} "
@@ -195,10 +198,13 @@ def username_spread(report, top=10):
             for username, count in attempts.most_common(top)]
 
 
-def as_csv(report, top=10):
+def as_csv(report, top=10, focus=None, minimum=1):
     """The sources table as CSV, for a spreadsheet or another script."""
     rows = ["address,first,last,connections,events,failures,successes,succeeded_as,usernames"]
-    for source in report.sources[:top]:
+    shown = report.sources if not focus else [s for s in report.sources if s.address == focus]
+    if minimum > 1:
+        shown = [source for source in shown if source.attempts >= minimum]
+    for source in shown[:top]:
         succeeded = " ".join(sessions.succeeded_as(source))
         names = " ".join(name for name, _ in source.usernames.most_common(5))
         fields = (source.address,
@@ -218,10 +224,15 @@ def _csv_field(value):
     return value
 
 
-def as_dict(report, top=10):
+def as_dict(report, top=10, focus=None, minimum=1):
     """The same reconstruction as data, for anything that wants to plot it."""
+    shown = report.sources if not focus else [s for s in report.sources if s.address == focus]
+    if minimum > 1:
+        shown = [source for source in shown if source.attempts >= minimum]
+
     return {
         "files": list(dict.fromkeys(report.files)),
+        "hosts": getattr(report, "hosts", []),
         "lines": report.line_count,
         "events": len(report.events),
         "unrecognised": len(report.unrecognised),
@@ -245,7 +256,7 @@ def as_dict(report, top=10):
                      "when": event.timestamp.isoformat() if event.timestamp else None}
                     for event in source.accounts],
             }
-            for source in report.sources[:top]
+            for source in shown[:top]
         ],
-        "findings": sessions.findings(report.sources),
+        "findings": sessions.findings(shown),
     }

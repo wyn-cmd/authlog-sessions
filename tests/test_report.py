@@ -48,6 +48,20 @@ class ReportTests(unittest.TestCase):
         narrowed = self.report.only("203.0.113.5")
         self.assertEqual(len(narrowed.unrecognised), len(self.report.unrecognised))
 
+    def test_a_single_host_report_names_it(self):
+        self.assertEqual(self.report.hosts, ["web01"])
+
+    def test_multiple_hosts_are_all_recorded(self):
+        line1 = build.sshd(datetime.datetime(2026, 9, 15, 3, 0, 0),
+                            "Accepted password for root from 203.0.113.5 port 4000 ssh2",
+                            host="web01")
+        line2 = build.sshd(datetime.datetime(2026, 9, 15, 3, 1, 0),
+                            "Accepted password for root from 203.0.113.6 port 4001 ssh2",
+                            host="db02")
+        events = [e for e in (parse.parse_line(l) for l in (line1, line2)) if e]
+        multi = report.Report(events, ["/var/log/auth.log"], 2)
+        self.assertEqual(multi.hosts, ["db02", "web01"])
+
 
 class RenderTests(unittest.TestCase):
     def setUp(self):
@@ -156,6 +170,34 @@ class JsonTests(unittest.TestCase):
     def test_the_times_are_iso_strings(self):
         data = report.as_dict(report_from(build.quiet_log()))
         self.assertIn("T", data["sources"][0]["first"])
+
+    def test_dict_respects_the_focused_address(self):
+        lines = build.brute_force_log() + build.scanner_log() + build.quiet_log()
+        data = report.as_dict(report_from(lines), focus="203.0.113.5")
+        self.assertEqual(len(data["sources"]), 1)
+        self.assertEqual(data["sources"][0]["address"], "203.0.113.5")
+
+    def test_dict_respects_the_minimum_attempts(self):
+        lines = build.brute_force_log() + build.scanner_log() + build.quiet_log()
+        data = report.as_dict(report_from(lines), minimum=999)
+        self.assertEqual(data["sources"], [])
+
+
+class CsvTests(unittest.TestCase):
+    def setUp(self):
+        lines = build.brute_force_log() + build.scanner_log() + build.quiet_log()
+        self.report = report_from(lines)
+
+    def test_respects_the_focused_address(self):
+        text = report.as_csv(self.report, focus="203.0.113.5")
+        data_rows = [row for row in text.strip().split("\n")[1:] if row]
+        self.assertEqual(len(data_rows), 1)
+        self.assertTrue(data_rows[0].startswith("203.0.113.5,"))
+
+    def test_respects_the_minimum_attempts(self):
+        text = report.as_csv(self.report, minimum=999)
+        data_rows = [row for row in text.strip().split("\n")[1:] if row]
+        self.assertEqual(data_rows, [])
 
 
 class FormattingTests(unittest.TestCase):
