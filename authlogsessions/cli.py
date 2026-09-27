@@ -57,8 +57,8 @@ def build_parser():
                         help="only count events at or before this time")
     parser.add_argument("--min-attempts", type=int, default=1, metavar="N",
                         help="hide sources with fewer than this many events")
-    parser.add_argument("--users", type=int, default=0, metavar="N",
-                        help="also list the top N usernames being tried")
+    parser.add_argument("--top-usernames", type=int, default=10, metavar="N",
+                        help="show top N usernames in the report")
     parser.add_argument("--quiet", action="store_true",
                         help="print the table and the findings, without the narratives")
     parser.add_argument("--source", metavar="ADDRESS",
@@ -161,7 +161,7 @@ def main(argv=None):
     else:
         print(report.render(result, top=args.top, focus=args.source,
                             minimum=args.min_attempts, quiet=args.quiet,
-                            users=args.users, quiet_summaries=args.quiet_summaries), end="")
+                            users=args.top_usernames, quiet_summaries=args.quiet_summaries), end="")
 
     if args.fail_on_findings and findings:
         return 3
