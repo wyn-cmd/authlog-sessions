@@ -77,6 +77,8 @@ def build_parser():
                         help="attempt reverse DNS lookups for source addresses")
     parser.add_argument("--quiet-summaries", action="store_true",
                         help="suppress printing the sources summary table")
+    parser.add_argument("--exit-code", action="store_true",
+                        help="always exit 1 if findings are detected")
     parser.add_argument("--version", action="version",
                         version=f"authlog-sessions {__version__}")
     return parser
@@ -165,6 +167,8 @@ def main(argv=None):
 
     if args.fail_on_findings and findings:
         return 3
+    if args.exit_code and findings:
+        return 1
     return 0
 
 
