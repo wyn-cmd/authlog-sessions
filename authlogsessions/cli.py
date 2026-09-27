@@ -70,6 +70,8 @@ def build_parser():
                         help="print the sources table as CSV")
     parser.add_argument("--json", action="store_true",
                         help="print the reconstruction as JSON")
+    parser.add_argument("--summary-only", action="store_true",
+                        help="print only the summary table, omitting details")
     parser.add_argument("--version", action="version",
                         version=f"authlog-sessions {__version__}")
     return parser
@@ -141,6 +143,9 @@ def main(argv=None):
     if args.json:
         print(json.dumps(report.as_dict(result, top=args.top, focus=args.source,
                                         minimum=args.min_attempts), indent=2))
+    elif args.summary_only:
+        print(report.as_csv(result, top=args.top, focus=args.source,
+                            minimum=args.min_attempts).replace(',', '  '), end="")
     else:
         print(report.render(result, top=args.top, focus=args.source,
                             minimum=args.min_attempts, quiet=args.quiet,
