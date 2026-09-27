@@ -7,6 +7,7 @@ modules this calls.
 import argparse
 import datetime
 import json
+import socket
 import sys
 
 from . import __version__
@@ -72,6 +73,8 @@ def build_parser():
                         help="print the reconstruction as JSON")
     parser.add_argument("--summary-only", action="store_true",
                         help="print only the summary table, omitting details")
+    parser.add_argument("--reverse-dns", action="store_true",
+                        help="attempt reverse DNS lookups for source addresses")
     parser.add_argument("--version", action="version",
                         version=f"authlog-sessions {__version__}")
     return parser
@@ -131,6 +134,13 @@ def main(argv=None):
             return 1
 
     result = report.Report(events, files, lines, host=host)
+    if args.reverse_dns:
+        for source in result.sources:
+            try:
+                hostnames = socket.gethostbyaddr(source.address)
+                source.address = hostnames[0]
+            except (socket.herror, socket.gaierror):
+                pass
     scoped_sources = (result.sources if not args.source
                        else [s for s in result.sources if s.address == args.source])
     findings = sessions.findings(scoped_sources)
