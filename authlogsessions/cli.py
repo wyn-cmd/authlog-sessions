@@ -75,6 +75,8 @@ def build_parser():
                         help="print only the summary table, omitting details")
     parser.add_argument("--reverse-dns", action="store_true",
                         help="attempt reverse DNS lookups for source addresses")
+    parser.add_argument("--quiet-summaries", action="store_true",
+                        help="suppress printing the sources summary table")
     parser.add_argument("--version", action="version",
                         version=f"authlog-sessions {__version__}")
     return parser
@@ -159,7 +161,7 @@ def main(argv=None):
     else:
         print(report.render(result, top=args.top, focus=args.source,
                             minimum=args.min_attempts, quiet=args.quiet,
-                            users=args.users), end="")
+                            users=args.users, quiet_summaries=args.quiet_summaries), end="")
 
     if args.fail_on_findings and findings:
         return 3

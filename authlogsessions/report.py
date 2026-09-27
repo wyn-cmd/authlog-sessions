@@ -114,36 +114,36 @@ def _narrative(source, width=100):
 
 
 def render(report, top=10, focus=None, width=100, minimum=1, quiet=False,
-           users=0):
+           users=0, quiet_summaries=False):
     out = []
-
-    out.append(f"{len(report.files)} file(s), {report.line_count:,} line(s), "
-               f"{len(report.events):,} recognised, {len(report.sources)} source address(es)")
-    if len(getattr(report, "hosts", [])) > 1:
-        out.append("hosts " + ", ".join(report.hosts))
-    elif report.host:
-        out.append(f"host {report.host}")
-    if report.first:
-        out.append(f"window {stamp(report.first)} to {stamp(report.last)} "
-                   f"({human_duration(report.window)})")
-    out.append("")
-
-    shown = report.sources if not focus else [s for s in report.sources if s.address == focus]
-    if minimum > 1:
-        shown = [source for source in shown if source.attempts >= minimum]
-    if not shown:
-        out.append(f"nothing from {focus}" if focus else "nothing was recognised in these logs")
+    if not quiet_summaries:
+        out.append(f"{len(report.files)} file(s), {report.line_count:,} line(s), "
+                   f"{len(report.events):,} recognised, {len(report.sources)} source address(es)")
+        if len(getattr(report, "hosts", [])) > 1:
+            out.append("hosts " + ", ".join(report.hosts))
+        elif report.host:
+            out.append(f"host {report.host}")
+        if report.first:
+            out.append(f"window {stamp(report.first)} to {stamp(report.last)} "
+                       f"({human_duration(report.window)})")
         out.append("")
-        return "\n".join(out)
 
-    out.append("sources, busiest first")
-    for source in shown[:top]:
-        out.append("  " + _source_line(source))
-    if len(shown) > top:
-        rest = shown[top:]
-        out.append(f"  and {len(rest)} more, {sum(item.attempts for item in rest):,} event(s) "
-                   f"between them")
-    out.append("")
+        shown = report.sources if not focus else [s for s in report.sources if s.address == focus]
+        if minimum > 1:
+            shown = [source for source in shown if source.attempts >= minimum]
+        if not shown:
+            out.append(f"nothing from {focus}" if focus else "nothing was recognised in these logs")
+            out.append("")
+            return "\n".join(out)
+
+        out.append("sources, busiest first")
+        for source in shown[:top]:
+            out.append("  " + _source_line(source))
+        if len(shown) > top:
+            rest = shown[top:]
+            out.append(f"  and {len(rest)} more, {sum(item.attempts for item in rest):,} event(s) "
+                       f"between them")
+        out.append("")
 
     if users:
         out.append("usernames being tried")
@@ -152,6 +152,12 @@ def render(report, top=10, focus=None, width=100, minimum=1, quiet=False,
             out.append(f"  {count:>7,}  {username:<24} "
                        f"tried by {sources_seen} {plural}")
         out.append("")
+
+    # Determine shown sources for narrative reporting
+    if 'shown' not in locals():
+        shown = report.sources if not focus else [s for s in report.sources if s.address == focus]
+        if minimum > 1:
+            shown = [source for source in shown if source.attempts >= minimum]
 
     if not quiet:
         for source in shown[:top if not focus else len(shown)]:
