@@ -10,7 +10,7 @@ failed=0
 
 for module in tests/test_*.py; do
     name=$(basename "$module")
-    output=$(python3 "$module" 2>&1)
+    output=$(python "$module" 2>&1)
     if [ $? -eq 0 ]; then
         count=$(echo "$output" | sed -n 's/^Ran \([0-9]\+\) tests.*/\1/p')
         echo "ok   $name (${count:-?} tests)"

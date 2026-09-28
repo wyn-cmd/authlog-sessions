@@ -13,6 +13,7 @@ not read is how you find out the parser is wrong.
 """
 
 import datetime
+import os
 import re
 
 from collections import namedtuple
@@ -278,6 +279,9 @@ def read_lines(paths, year=None):
                 yield "-", number, line
             continue
 
+        # Raise IsADirectoryError explicitly for cross-platform consistency
+        if os.path.isdir(path):
+            raise IsADirectoryError(path)
         with open(path, "rb") as handle:
             head = handle.read(2)
             handle.seek(0)
