@@ -58,6 +58,19 @@ class Report:
         return narrowed
 
 
+# The table, the narratives, the CSV and the JSON all want the same list of
+# sources, so the narrowing happens in one place: every source, or the one
+# address asked for, and never a source below the minimum number of events.
+def narrow_sources(report, focus=None, minimum=1):
+    if focus:
+        shown = [source for source in report.sources if source.address == focus]
+    else:
+        shown = list(report.sources)
+    if minimum > 1:
+        shown = [source for source in shown if source.attempts >= minimum]
+    return shown
+
+
 def _source_line(source):
     return (f"{source.attempts:>6,} event(s)  {source.address:<39} "
             f"{len(source.connections):>3} connection(s)  {sessions.outcome(source)}")
@@ -116,6 +129,7 @@ def _narrative(source, width=100):
 def render(report, top=10, focus=None, width=100, minimum=1, quiet=False,
            users=0, quiet_summaries=False):
     out = []
+    shown = narrow_sources(report, focus, minimum)
     if not quiet_summaries:
         out.append(f"{len(report.files)} file(s), {report.line_count:,} line(s), "
                    f"{len(report.events):,} recognised, {len(report.sources)} source address(es)")
@@ -128,9 +142,6 @@ def render(report, top=10, focus=None, width=100, minimum=1, quiet=False,
                        f"({human_duration(report.window)})")
         out.append("")
 
-        shown = report.sources if not focus else [s for s in report.sources if s.address == focus]
-        if minimum > 1:
-            shown = [source for source in shown if source.attempts >= minimum]
         if not shown:
             out.append(f"nothing from {focus}" if focus else "nothing was recognised in these logs")
             out.append("")
@@ -152,12 +163,6 @@ def render(report, top=10, focus=None, width=100, minimum=1, quiet=False,
             out.append(f"  {count:>7,}  {username:<24} "
                        f"tried by {sources_seen} {plural}")
         out.append("")
-
-    # Determine shown sources for narrative reporting
-    if 'shown' not in locals():
-        shown = report.sources if not focus else [s for s in report.sources if s.address == focus]
-        if minimum > 1:
-            shown = [source for source in shown if source.attempts >= minimum]
 
     if not quiet:
         for source in shown[:top if not focus else len(shown)]:
@@ -207,9 +212,7 @@ def username_spread(report, top=10):
 def as_csv(report, top=10, focus=None, minimum=1):
     """The sources table as CSV, for a spreadsheet or another script."""
     rows = ["address,first,last,connections,events,failures,successes,succeeded_as,usernames"]
-    shown = report.sources if not focus else [s for s in report.sources if s.address == focus]
-    if minimum > 1:
-        shown = [source for source in shown if source.attempts >= minimum]
+    shown = narrow_sources(report, focus, minimum)
     for source in shown[:top]:
         succeeded = " ".join(sessions.succeeded_as(source))
         names = " ".join(name for name, _ in source.usernames.most_common(5))
@@ -232,9 +235,7 @@ def _csv_field(value):
 
 def as_dict(report, top=10, focus=None, minimum=1):
     """The same reconstruction as data, for anything that wants to plot it."""
-    shown = report.sources if not focus else [s for s in report.sources if s.address == focus]
-    if minimum > 1:
-        shown = [source for source in shown if source.attempts >= minimum]
+    shown = narrow_sources(report, focus, minimum)
 
     return {
         "files": list(dict.fromkeys(report.files)),
