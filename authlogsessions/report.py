@@ -1,15 +1,12 @@
-"""Printing the reconstructed sessions.
-
-The order is deliberate and it is the opposite of most log tools. The summary
-table comes first because that is what someone wants in the first ten seconds,
-then a short narrative per address, then the handful of lines that are actually
-alarming. A report that opens with 4,000 raw lines is a report nobody reads.
-"""
-
-from . import parse
-from . import sessions
+# Printing the reconstructed sessions.
+# The order is deliberate and it is the opposite of most log tools. The summary
+# table comes first because that is what someone wants in the first ten seconds,
+# then a short narrative per address, then the handful of lines that are actually
+# alarming. A report that opens with 4,000 raw lines is a report nobody reads.
 
 from collections import Counter, defaultdict
+from . import parse
+from . import sessions
 
 
 def human_duration(seconds):
@@ -28,8 +25,8 @@ def stamp(moment):
     return moment.strftime("%Y-%m-%d %H:%M:%S") if moment else "unknown"
 
 
+# Everything the output needs, gathered once.
 class Report:
-    """Everything the output needs, gathered once."""
 
     def __init__(self, events, files, line_count, host=None):
         self.events = events
@@ -50,8 +47,8 @@ class Report:
             return 0
         return (self.last - self.first).total_seconds()
 
+    # A copy of this report narrowed to one address.
     def only(self, address):
-        """A copy of this report narrowed to one address."""
         kept = [event for event in self.events if event.address == address]
         narrowed = Report(kept, self.files, self.line_count, self.host)
         narrowed.unrecognised = self.unrecognised
@@ -76,13 +73,11 @@ def _source_line(source):
             f"{len(source.connections):>3} connection(s)  {sessions.outcome(source)}")
 
 
+# The hours of the day this address was most active in.
+# A machine that works through the small hours is usually another
+# machine, and a person logging in at four in the morning is worth
+# asking about, so the shape of the day is worth printing.
 def busiest_hours(source, top=3):
-    """The hours of the day this address was most active in.
-
-    A machine that works through the small hours is usually another
-    machine, and a person logging in at four in the morning is worth
-    asking about, so the shape of the day is worth printing.
-    """
     counted = Counter()
     for connection in source.connections:
         for event in connection.events:
@@ -192,13 +187,11 @@ def render(report, top=10, focus=None, width=100, minimum=1, quiet=False,
     return "\n".join(out)
 
 
+# Usernames across every source, with how many addresses tried each.
+# One address trying root is a bot. Twenty addresses trying the same
+# three names at once is a campaign against those names, and the report
+# reads differently when you can see that.
 def username_spread(report, top=10):
-    """Usernames across every source, with how many addresses tried each.
-
-    One address trying root is a bot. Twenty addresses trying the same
-    three names at once is a campaign against those names, and the report
-    reads differently when you can see that.
-    """
     attempts = Counter()
     address_sets = defaultdict(set)
     for source in report.sources:
@@ -209,8 +202,8 @@ def username_spread(report, top=10):
             for username, count in attempts.most_common(top)]
 
 
+# The sources table as CSV, for a spreadsheet or another script.
 def as_csv(report, top=10, focus=None, minimum=1):
-    """The sources table as CSV, for a spreadsheet or another script."""
     rows = ["address,first,last,connections,events,failures,successes,succeeded_as,usernames"]
     shown = narrow_sources(report, focus, minimum)
     for source in shown[:top]:
@@ -226,15 +219,15 @@ def as_csv(report, top=10, focus=None, minimum=1):
     return "\n".join(rows) + "\n"
 
 
+# Quote a field if it holds anything that would break the row.
 def _csv_field(value):
-    """Quote a field if it holds anything that would break the row."""
     if any(character in value for character in ',"\n'):
         return '"' + value.replace('"', '""') + '"'
     return value
 
 
+# The same reconstruction as data, for anything that wants to plot it.
 def as_dict(report, top=10, focus=None, minimum=1):
-    """The same reconstruction as data, for anything that wants to plot it."""
     shown = narrow_sources(report, focus, minimum)
 
     return {
